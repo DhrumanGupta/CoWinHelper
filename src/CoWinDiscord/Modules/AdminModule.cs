@@ -15,12 +15,10 @@ namespace CoWinDiscord.Modules
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
         private readonly HttpRequestHandler _httpRequestHandler;
-        private readonly IConfiguration _configuration;
 
-        public AdminModule(HttpRequestHandler httpRequestHandler, IConfiguration configuration)
+        public AdminModule(IConfiguration configuration)
         {
-            _httpRequestHandler = httpRequestHandler;
-            _configuration = configuration;
+            _httpRequestHandler = new HttpRequestHandler();
         }
 
         [Command("status", RunMode = RunMode.Async)]
@@ -28,7 +26,7 @@ namespace CoWinDiscord.Modules
         public async Task Status()
         {
             if (!await SentOnMasterGuild()) return;
-            
+
             await Context.Message.DeleteAsync();
             await ReplyAsync($"I am on {Context.Client.Guilds.Count} servers!");
         }
@@ -39,88 +37,88 @@ namespace CoWinDiscord.Modules
         {
             if (string.IsNullOrWhiteSpace(command) || !await SentOnMasterGuild()) return;
 
-            var data = await GetStates();
-            if (data == null) return;
-
             await ReplyAsync("Doing");
 
-            var guilds = Context.Client.Guilds.Where(x => x.Id != 789070012307865632).ToArray();
+            var guild = Context.Client.Guilds.FirstOrDefault(x => x.Id != 789070012307865632);
 
             switch (command.ToLower())
             {
                 case "delete":
-                    await DeleteAllDataAsync(guilds);
+                    await DeleteAllDataAsync(guild);
                     break;
                 case "create":
-                    await PopulateAllGuildsAsync(data, guilds);
+                    await PopulateAllGuildsAsync(new State {Id = 9, Name = "Delhi"}, guild);
                     break;
             }
 
             await ReplyAsync($"{Context.User.Mention}, I have done it!");
         }
 
-        private static async Task DeleteAllDataAsync(SocketGuild[] guilds)
+        private static async Task DeleteAllDataAsync(SocketGuild guild)
         {
-            foreach (var guild in guilds)
-            {
-                foreach (var category in guild.CategoryChannels.Where(x => x.Name.ToLower() != "//info"))
-                {
-                    foreach (var channel in category.Channels)
-                    {
-                        await channel.DeleteAsync();
-                    }
+            var channelIds = guild.CategoryChannels
+                .Where(x => x.Name.ToLower() != "info" || x.Name.ToLower() != "other")
+                .Select(x => x.Channels)
+                .Select(x => x.Select(x => x.Id));
+            
+            Console.WriteLine(channelIds);
+        }
 
-                    await category.DeleteAsync();
+        private async Task PopulateAllGuildsAsync(State state, SocketGuild guild)
+        {
+            var infoCat = GetCategory(guild, "Info") ??
+                          await guild.CreateCategoryChannelAsync("Info");
+
+            if (!ChannelExists(guild, "How To Use"))
+            {
+                await CreateReadonlyChannel(guild, infoCat, "How to use");
+            }
+
+            var supportCat = GetCategory(guild, "Other") ??
+                             await guild.CreateCategoryChannelAsync("Other");
+
+            if (!ChannelExists(guild, "Feedback"))
+            {
+                await guild.CreateTextChannelAsync("Feedback", x =>
+                {
+                    x.CategoryId = supportCat.Id;
+                });
+            }
+            
+            if (!ChannelExists(guild, "bot commands"))
+            {
+                await guild.CreateTextChannelAsync("bot commands", x =>
+                {
+                    x.CategoryId = supportCat.Id;
+                });
+            }
+
+            var category = GetCategory(guild, state.Name) ??
+                           await guild.CreateCategoryChannelAsync(state.Name);
+            var districts = await GetDistrictsAsync(state);
+            if (districts == null) return;
+
+            foreach (var district in districts)
+            {
+                if (ChannelExists(guild, district.Name.ToLower())) continue;
+
+                try
+                {
+                    await CreateReadonlyChannel(guild, category, district.Name,
+                        $"Alerts for {district.Name}");
+                }
+                catch
+                {
+                    category = GetCategory(guild, $"{state.Name} 2") ??
+                               await guild.CreateCategoryChannelAsync($"{state.Name} 2");
+                    await CreateReadonlyChannel(guild, category, district.Name,
+                        $"Alerts for {district.Name}");
                 }
             }
         }
 
-        private async Task PopulateAllGuildsAsync(State[] data, SocketGuild[] guilds)
-        {
-            var splitStates = data.Split(10).ToArray();
-            for (var index = 0; index < splitStates.Length; index++)
-            {
-                var states = splitStates[index];
-                var currentGuild = guilds[index];
-
-                if (GetCategory(currentGuild, "Info") == null)
-                {
-                    var infoCat = await currentGuild.CreateCategoryChannelAsync("Info");
-
-                    if (!ChannelExists(currentGuild, "How To Use"))
-                    {
-                        await CreateReadonlyChannel(currentGuild, infoCat, "How to use");
-                    }
-                }
-
-                
-                foreach (var state in states)
-                {
-                    var category = GetCategory(currentGuild, state.Name) ??
-                                   await currentGuild.CreateCategoryChannelAsync(state.Name);
-                    var districts = await GetDistrictsAsync(state);
-                    if (districts == null) continue;
-
-                    foreach (var district in districts)
-                    {
-                        if (ChannelExists(currentGuild, district.Name.ToLower())) continue;
-
-                        try
-                        {
-                            await CreateReadonlyChannel(currentGuild, category, district.Name, $"Alerts for {district.Name}");
-                        }
-                        catch
-                        {
-                            category = GetCategory(currentGuild, $"{state.Name} 2") ??
-                                       await currentGuild.CreateCategoryChannelAsync($"{state.Name} 2");
-                            await CreateReadonlyChannel(currentGuild, category, district.Name, $"Alerts for {district.Name}");
-                        }
-                    }
-                }
-            }
-        }
-
-        private static async Task CreateReadonlyChannel(SocketGuild currentGuild, ICategoryChannel category, string name, string topic = "")
+        private static async Task CreateReadonlyChannel(SocketGuild currentGuild, ICategoryChannel category,
+            string name, string topic = "")
         {
             await currentGuild.CreateTextChannelAsync(name, x =>
             {
@@ -158,7 +156,8 @@ namespace CoWinDiscord.Modules
         private bool ChannelExists(SocketGuild guild, string name)
         {
             name = name.Replace(' ', '-');
-            var channel = guild.TextChannels.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
+            var channel = guild.TextChannels.FirstOrDefault(x =>
+                string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
             return channel != null;
         }
 

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using OpenQA.Selenium.DevTools.V89.Overlay;
 
 namespace CowinChecker
 {

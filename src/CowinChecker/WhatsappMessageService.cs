@@ -12,12 +12,11 @@ namespace CowinChecker
 
         public WhatsappMessageService()
         {
-            var driverService = ChromeDriverService.CreateDefaultService("C:/webDrivers/");
+            // var driverService = ChromeDriverService.CreateDefaultService("C:/webDrivers/");
 
             var options = new ChromeOptions();
 
             options.AddExcludedArgument("enable-automation");
-            options.AddAdditionalOption("useAutomationExtension", false);
 
             options.AddArgument("disable-gpu");
             options.AddArgument("disable-software-rasterizer");
@@ -29,8 +28,7 @@ namespace CowinChecker
             chromeDriverService.HideCommandPromptWindow = true;
             chromeDriverService.SuppressInitialDiagnosticInformation = true;
 
-            _driver = new ChromeDriver(driverService, options);
-            _driver.Url = "https://web.whatsapp.com/";
+            _driver = new ChromeDriver(options) {Url = "https://web.whatsapp.com/"};
             _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
 
             try

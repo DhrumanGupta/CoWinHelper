@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CoWinDiscord.Models;
@@ -30,7 +31,7 @@ namespace CoWinDiscord
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("appsettings.json", false, true)
                         .Build();
-            
+
                     x.AddConfiguration(configuration);
                 })
                 .ConfigureLogging(x =>
@@ -42,11 +43,11 @@ namespace CoWinDiscord
                 {
                     config.SocketConfig = new DiscordSocketConfig
                     {
-                        LogLevel = LogSeverity.Error,
+                        LogLevel = LogSeverity.Info,
                         AlwaysDownloadUsers = true,
                         MessageCacheSize = 200,
                     };
-                    
+
                     config.Token = context.Configuration["token"];
                 })
                 .UseCommandService((context, config) =>
@@ -54,18 +55,17 @@ namespace CoWinDiscord
                     config = new CommandServiceConfig()
                     {
                         CaseSensitiveCommands = false,
-                        LogLevel = LogSeverity.Error
+                        LogLevel = LogSeverity.Info
                     };
                 })
                 .ConfigureServices((context, services) =>
                 {
                     services
                         .AddHostedService<CommandHandler>()
-                        .AddSingleton<HttpRequestHandler>()
                         .AddSingleton<MainModule>();
                 })
                 .UseConsoleLifetime();
-            
+
             var host = builder.Build();
             using (host)
             {

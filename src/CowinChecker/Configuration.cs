@@ -12,6 +12,7 @@
         public int[] Districts { get; set; }
         public int[] PinCodes { get; set; }
         public int MinimumSeats { get; set; }
+        public string[] CenterKeywords { get; set; }
         public string VaccineType { get; set; }
     }
 }

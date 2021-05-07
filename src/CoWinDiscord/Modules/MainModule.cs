@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using CoWinDiscord.Models;
 using CoWinDiscord.Services;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 
@@ -16,76 +15,86 @@ namespace CoWinDiscord.Modules
         private readonly HttpRequestHandler _httpRequestHandler;
         private readonly DiscordSocketClient _client;
 
-        public MainModule(HttpRequestHandler httpRequestHandler, DiscordSocketClient client)
+        public MainModule(DiscordSocketClient client)
         {
-            _httpRequestHandler = httpRequestHandler;
+            _httpRequestHandler = new HttpRequestHandler();
             _client = client;
         }
-        
+
         public async Task StartLoop()
         {
-            Console.WriteLine("start");
+            Console.WriteLine("\nStarted Main Loop\n");
             while (true)
             {
-                var states = await GetStatesAsync();
-                if (states == null) continue;
+                var server = _client.Guilds.FirstOrDefault(x => x.Id != 789070012307865632);
+                await ProcessData(9, server);
 
-                var servers = _client.Guilds.Where(x => x.Id != 789070012307865632).ToArray();
-                Console.WriteLine($"\n\n\n\n{servers.Length}\n\n\n\n");
-
-                for (var index = 0; index < states.Length; index++)
-                {
-                    var state = states[index];
-                    var districts = await GetDistrictsAsync(state);
-                    if (districts == null) continue;
-
-                    var server = servers[index/10];
-
-                    foreach (var district in districts)
-                    {
-                        var centers = await GetCentersAsync(district);
-                        if (centers is not {Length: > 0}) continue;
-
-                        var possibleCenters = new List<Center>();
-                        foreach (var center in centers)
-                        {
-                            var cent = center;
-                            var sessions = new List<Session>();
-                            foreach (var session in center.sessions.Where(session =>
-                                session.available_capacity > 0 && session.min_age_limit < 45))
-                            {
-                                sessions.Add(session);
-                            }
-
-                            cent.sessions = sessions.ToArray();
-                            possibleCenters.Add(cent);
-                        }
-                        
-                        if (possibleCenters.Count <= 0) continue;
-
-                        var embeds = possibleCenters
-                            .Select(EmbedsFromCenter)
-                            .ToArray();
-                        
-                        var channel = GetChannel(server, district.Name);
-                        foreach (var centerEmbeds in embeds)
-                        {
-                            foreach (var embed in centerEmbeds)
-                            {
-                                await channel.SendMessageAsync(null, false, embed);
-                            }
-                        }
-                    }
-                }
-
-                await Task.Delay(5000);
+                await Task.Delay(15000);
             }
         }
-        
+
+        private async Task ProcessData(int stateId, SocketGuild server)
+        {
+            var districts = await GetDistrictsAsync(stateId);
+            if (districts == null)
+            {
+                Console.WriteLine("shit fucked ip");
+                return;
+            }
+
+            foreach (var district in districts)
+            {
+                await ManageChannelData(server, district);
+                await Task.Delay(700);
+            }
+            
+            Console.WriteLine($"Checked at {DateTime.Now}");
+        }
+
+        private async Task ManageChannelData(SocketGuild server, District district)
+        {
+            var centers = await GetCentersAsync(district);
+            if (centers is not {Length: > 0})
+            {
+#if DEBUG
+                Console.WriteLine("shit fucked ip");
+#endif
+                return;
+            }
+
+            var possibleCenters = new List<Center>();
+            foreach (var center in centers)
+            {
+                center.sessions = center.sessions
+                    .Where(session => session.available_capacity > 0 && session.min_age_limit < 45)
+                    .ToArray();
+
+                if (center.sessions.Length == 0) continue;
+                possibleCenters.Add(center);
+            }
+
+            if (possibleCenters.Count <= 0) return;
+#if DEBUG
+            Console.WriteLine($"Found some centers for {district.Name}");
+#endif
+
+            var embeds = possibleCenters
+                .Select(EmbedsFromCenter)
+                .ToArray();
+
+            var channel = GetChannel(server, district.Name);
+            var tasks = (from centerEmbeds in embeds
+                from embed in centerEmbeds
+                select channel.SendMessageAsync(null, false, embed)).Cast<Task>().ToArray();
+
+            await Task.WhenAll(tasks);
+        }
+
         private SocketTextChannel GetChannel(SocketGuild guild, string name)
         {
             name = name.Replace(' ', '-');
-            var channel = guild.TextChannels.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
+            var channel = guild.TextChannels.FirstOrDefault(x =>
+                string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
             return channel;
         }
 
@@ -95,42 +104,30 @@ namespace CoWinDiscord.Modules
 
             for (var i = 0; i < embeds.Length; i++)
             {
+                var session = center.sessions[i];
                 embeds[i] = new EmbedBuilder()
                     .WithColor(Color.Green)
-                    .WithTitle($"{center.sessions[i].vaccine} available")
-                    .AddField("Center Name", center.name)
-                    .WithFooter($"{center.sessions[i].available_capacity} seats available!")
+                    .WithTitle($"{session.vaccine} available")
+                    .AddField("Address", $"{center.name},\n{center.district_name}")
+                    .AddField("Date", session.date)
+                    .AddField("Available Capacity", session.available_capacity, true)
+                    // .WithFooter("To donate, run !donate in #bot-commands")
                     .WithTimestamp(DateTimeOffset.Now)
                     .Build();
             }
 
             return embeds;
         }
-        
-        private async Task<State[]> GetStatesAsync()
-        {
-            var statesJson =
-                await _httpRequestHandler.GetAsync("https://cdn-api.co-vin.in/api/v2/admin/location/states");
 
-            try
-            {
-                var states = JsonConvert.DeserializeObject<StateData>(statesJson).States;
-                return states;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-        
-        private async Task<District[]> GetDistrictsAsync(State state)
+        private async Task<District[]> GetDistrictsAsync(int stateId)
         {
             var json =
-                await _httpRequestHandler.GetAsync($"https://cdn-api.co-vin.in/api/v2/admin/location/districts/{state.Id}");
+                await _httpRequestHandler.GetAsync(
+                    $"https://cdn-api.co-vin.in/api/v2/admin/location/districts/{stateId}");
 
             try
             {
-                var districts = JsonConvert.DeserializeObject<DistrictData>(json).Districts;
+                var districts = JsonConvert.DeserializeObject<DistrictData>(json)?.Districts;
                 return districts;
             }
             catch (Exception)
@@ -147,7 +144,7 @@ namespace CoWinDiscord.Modules
 
             try
             {
-                var centerData = JsonConvert.DeserializeObject<CenterData>(json).centers;
+                var centerData = JsonConvert.DeserializeObject<CenterData>(json)?.centers;
                 return centerData;
             }
             catch (Exception)

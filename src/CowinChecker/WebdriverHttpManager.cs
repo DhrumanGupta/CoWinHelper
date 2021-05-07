@@ -16,12 +16,11 @@ namespace CowinChecker
 
         public WebdriverHttpManager()
         {
-            var driverService = ChromeDriverService.CreateDefaultService("C:/webDrivers/");
+            // var driverService = ChromeDriverService.CreateDefaultService();
 
             var options = new ChromeOptions();
 
             options.AddExcludedArgument("enable-automation");
-            options.AddAdditionalOption("useAutomationExtension", false);
 
             options.AddArgument("disable-gpu");
             options.AddArgument("disable-software-rasterizer");
@@ -33,7 +32,7 @@ namespace CowinChecker
             chromeDriverService.HideCommandPromptWindow = true;
             chromeDriverService.SuppressInitialDiagnosticInformation = true;
 
-            _driver = new ChromeDriver(driverService, options);
+            _driver = new ChromeDriver(options);
 
             _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
         }

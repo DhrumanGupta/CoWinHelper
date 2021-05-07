@@ -36,9 +36,10 @@ namespace CoWinDiscord.Services
             await _service.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
         }
 
-        private async Task OnReady()
+        private Task OnReady()
         {
-            await _mainModule.StartLoop();
+            _mainModule.StartLoop();
+            return Task.CompletedTask;
         }
 
         private async Task OnMessageReceived(SocketMessage arg)
