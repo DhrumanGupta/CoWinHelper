@@ -1,28 +1,23 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace CowinChecker
 {
-    public class RequestHttpManager : IHttpManager
+    public class RequestHttpManager
     {
-        public string Get(string uri)
-        { 
-            var request = WebRequest.Create(uri);
-            request.Method = "GET";
-            request.Headers[":authority"] = "cdn-api.co-vin.in";
+        private readonly HttpClient _client = new();
 
-            using var webResponse = request.GetResponse();
-            using var webStream = webResponse.GetResponseStream();
+        public async Task<string> GetAsync(string uri)
+        {
+            var response = await _client.GetAsync(uri);
 
-            using var reader = new StreamReader(webStream);
-            var data = reader.ReadToEnd();
+            if (!response.IsSuccessStatusCode) return string.Empty;
+            var content = await response.Content.ReadAsStringAsync();
 
-            #if DEBUG
-            Console.WriteLine(data);
-            #endif
-            
-            return data;
+            return content;
         }
     }
 }

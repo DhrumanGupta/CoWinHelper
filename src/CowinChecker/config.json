@@ -13,13 +13,16 @@
     {
       "Name": "VaccineAlerts",
       "Districts": [
-        650,
-        651,
-        144,
         145
       ],
       "PinCodes": [],
       "MinimumSeats": 1,
+      "CenterKeywords": [
+        "DALLUPURA",
+        "ASHOK NAGAR",
+        "KONDLI",
+        "MAX HOSPITAL"
+      ],
       "VaccineType": ""
     }
   ]

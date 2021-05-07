@@ -20,7 +20,8 @@ namespace CowinChecker
 
         private static async Task StartLoop()
         {
-            IHttpManager manager = new WebdriverHttpManager();
+            // IHttpManager manager = new WebdriverHttpManager();
+            var manager = new RequestHttpManager();
             IMessageService messageService = new WhatsappMessageService();
             while (!messageService.IsReady)
             {
@@ -47,7 +48,8 @@ namespace CowinChecker
                         {
                             var uri =
                                 @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={district}&date={DateTime.Today:dd/MM/yyyy}";
-                            var result = manager.Get(uri);
+                            // var result = manager.Get(uri);
+                            var result = await manager.GetAsync(uri);
                             await ProcessData(result, filePath, messageService, person, DataType.District);
 
                             await Task.Delay(200);
@@ -60,7 +62,8 @@ namespace CowinChecker
                         {
                             var uri =
                                 @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByPin?pincode={pincode}&date={DateTime.Today:dd/MM/yyyy}";
-                            var result = manager.Get(uri);
+                            // var result = manager.Get(uri);
+                            var result = await manager.GetAsync(uri);
                             await ProcessData(result, filePath, messageService, person, DataType.Pincode);
 
                             await Task.Delay(50);
@@ -89,11 +92,17 @@ namespace CowinChecker
 
                 foreach (var center in centers)
                 {
+                    if (personData.CenterKeywords is {Length: > 0})
+                    {
+                        var valid = personData.CenterKeywords.Count(x => center.name.ToLower().Contains(x.ToLower())) > 0;
+                        if (!valid) continue;
+                    }
                     foreach (var session in center.sessions.Where(session =>
-                        session.available_capacity >= personData.MinimumSeats && session.min_age_limit < 45 && center.fee_type != "Free"))
+                        session.available_capacity >= personData.MinimumSeats && session.min_age_limit < 45))
                     {
                         if (!string.IsNullOrWhiteSpace(personData.VaccineType) &&
                             !string.Equals(session.vaccine, personData.VaccineType, StringComparison.CurrentCultureIgnoreCase)) continue;
+                        
                         if (!possibleSessions.ContainsKey(center))
                         {
                             possibleSessions.Add(center, new List<Session>());

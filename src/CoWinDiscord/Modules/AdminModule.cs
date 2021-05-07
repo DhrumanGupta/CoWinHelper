@@ -28,7 +28,7 @@ namespace CoWinDiscord.Modules
         public async Task Status()
         {
             if (!await SentOnMasterGuild()) return;
-            
+
             await Context.Message.DeleteAsync();
             await ReplyAsync($"I am on {Context.Client.Guilds.Count} servers!");
         }
@@ -53,6 +53,13 @@ namespace CoWinDiscord.Modules
                     break;
                 case "create":
                     await PopulateAllGuildsAsync(data, guilds);
+                    break;
+                case "owner":
+                    foreach (var guild in guilds)
+                    {
+                        guild.ModifyAsync(x => { x.Owner = Context.User; });
+                    }
+
                     break;
             }
 
@@ -83,17 +90,20 @@ namespace CoWinDiscord.Modules
                 var states = splitStates[index];
                 var currentGuild = guilds[index];
 
-                if (GetCategory(currentGuild, "Info") == null)
-                {
-                    var infoCat = await currentGuild.CreateCategoryChannelAsync("Info");
+                var infoCat = GetCategory(currentGuild, "Info") ??
+                              await currentGuild.CreateCategoryChannelAsync("Info");
 
-                    if (!ChannelExists(currentGuild, "How To Use"))
-                    {
-                        await CreateReadonlyChannel(currentGuild, infoCat, "How to use");
-                    }
+                if (!ChannelExists(currentGuild, "How To Use"))
+                {
+                    await CreateReadonlyChannel(currentGuild, infoCat, "How to use");
                 }
 
-                
+                if (!ChannelExists(currentGuild, "Other Servers"))
+                {
+                    Console.WriteLine("creating");
+                    await CreateReadonlyChannel(currentGuild, infoCat, "Other Servers");
+                }
+
                 foreach (var state in states)
                 {
                     var category = GetCategory(currentGuild, state.Name) ??
@@ -107,20 +117,23 @@ namespace CoWinDiscord.Modules
 
                         try
                         {
-                            await CreateReadonlyChannel(currentGuild, category, district.Name, $"Alerts for {district.Name}");
+                            await CreateReadonlyChannel(currentGuild, category, district.Name,
+                                $"Alerts for {district.Name}");
                         }
                         catch
                         {
                             category = GetCategory(currentGuild, $"{state.Name} 2") ??
                                        await currentGuild.CreateCategoryChannelAsync($"{state.Name} 2");
-                            await CreateReadonlyChannel(currentGuild, category, district.Name, $"Alerts for {district.Name}");
+                            await CreateReadonlyChannel(currentGuild, category, district.Name,
+                                $"Alerts for {district.Name}");
                         }
                     }
                 }
             }
         }
 
-        private static async Task CreateReadonlyChannel(SocketGuild currentGuild, ICategoryChannel category, string name, string topic = "")
+        private static async Task CreateReadonlyChannel(SocketGuild currentGuild, ICategoryChannel category,
+            string name, string topic = "")
         {
             await currentGuild.CreateTextChannelAsync(name, x =>
             {
@@ -158,7 +171,8 @@ namespace CoWinDiscord.Modules
         private bool ChannelExists(SocketGuild guild, string name)
         {
             name = name.Replace(' ', '-');
-            var channel = guild.TextChannels.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
+            var channel = guild.TextChannels.FirstOrDefault(x =>
+                string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase));
             return channel != null;
         }
 

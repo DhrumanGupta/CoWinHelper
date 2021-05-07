@@ -42,7 +42,7 @@ namespace CoWinDiscord
                 {
                     config.SocketConfig = new DiscordSocketConfig
                     {
-                        LogLevel = LogSeverity.Error,
+                        LogLevel = LogSeverity.Debug,
                         AlwaysDownloadUsers = true,
                         MessageCacheSize = 200,
                     };
@@ -54,7 +54,7 @@ namespace CoWinDiscord
                     config = new CommandServiceConfig()
                     {
                         CaseSensitiveCommands = false,
-                        LogLevel = LogSeverity.Error
+                        LogLevel = LogSeverity.Debug
                     };
                 })
                 .ConfigureServices((context, services) =>
