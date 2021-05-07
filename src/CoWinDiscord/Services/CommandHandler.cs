@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using CoWinDiscord.Modules;
 using Discord;
 using Discord.Addons.Hosting;
 
@@ -16,21 +17,28 @@ namespace CoWinDiscord.Services
         private readonly DiscordSocketClient _client;
         private readonly CommandService _service;
         private readonly IConfiguration _config;
+        private readonly MainModule _mainModule;
 
         public CommandHandler(IServiceProvider provider, DiscordSocketClient client, CommandService service,
-            IConfiguration config)
+            IConfiguration config, MainModule mainModule)
         {
             _provider = provider;
             _client = client;
             _service = service;
             _config = config;
+            _mainModule = mainModule;
         }
 
         public override async Task InitializeAsync(CancellationToken cancellationToken)
         {
             _client.MessageReceived += OnMessageReceived;
-
+            _client.Ready += OnReady;
             await _service.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
+        }
+
+        private async Task OnReady()
+        {
+            await _mainModule.StartLoop();
         }
 
         private async Task OnMessageReceived(SocketMessage arg)

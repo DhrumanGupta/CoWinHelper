@@ -1,5 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using CoWinDiscord.Models;
+using CoWinDiscord.Modules;
 using CoWinDiscord.Services;
 using Discord;
 using Discord.Addons.Hosting;
@@ -9,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace CoWinDiscord
 {
@@ -23,7 +30,7 @@ namespace CoWinDiscord
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("appsettings.json", false, true)
                         .Build();
-        
+            
                     x.AddConfiguration(configuration);
                 })
                 .ConfigureLogging(x =>
@@ -35,7 +42,7 @@ namespace CoWinDiscord
                 {
                     config.SocketConfig = new DiscordSocketConfig
                     {
-                        LogLevel = LogSeverity.Verbose,
+                        LogLevel = LogSeverity.Error,
                         AlwaysDownloadUsers = true,
                         MessageCacheSize = 200,
                     };
@@ -47,17 +54,18 @@ namespace CoWinDiscord
                     config = new CommandServiceConfig()
                     {
                         CaseSensitiveCommands = false,
-                        LogLevel = LogSeverity.Verbose
+                        LogLevel = LogSeverity.Error
                     };
                 })
                 .ConfigureServices((context, services) =>
                 {
                     services
                         .AddHostedService<CommandHandler>()
-                        .AddSingleton<HttpRequestHandler>();
+                        .AddSingleton<HttpRequestHandler>()
+                        .AddSingleton<MainModule>();
                 })
                 .UseConsoleLifetime();
-        
+            
             var host = builder.Build();
             using (host)
             {
