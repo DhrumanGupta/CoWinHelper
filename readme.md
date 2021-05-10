@@ -5,4 +5,4 @@ CoWinChecker is a console application which sends you messages on whatsapp if an
 CoWinDiscord is a more generalized try to help people get the vaccine (originally made for all of india, but the api blocked me for too many requests ;-;). Can be configured for your state of choice.
 
 - [CoWinChecker](/src/CowinChecker/)
-- [CoWinDiscord](/src/CoWinDiscordr/)
+- [CoWinDiscord](/src/CoWinDiscord/)
