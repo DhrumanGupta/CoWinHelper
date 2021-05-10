@@ -25,8 +25,6 @@ namespace CoWinDiscord.Modules
         [RequireOwner]
         public async Task Status()
         {
-            if (!await SentOnMasterGuild()) return;
-
             await Context.Message.DeleteAsync();
             await ReplyAsync($"I am on {Context.Client.Guilds.Count} servers!");
         }
@@ -35,33 +33,20 @@ namespace CoWinDiscord.Modules
         [RequireOwner]
         public async Task DoAsync(string command)
         {
-            if (string.IsNullOrWhiteSpace(command) || !await SentOnMasterGuild()) return;
+            if (string.IsNullOrWhiteSpace(command)) return;
 
             await ReplyAsync("Doing");
 
-            var guild = Context.Client.Guilds.FirstOrDefault(x => x.Id != 789070012307865632);
+            var guild = Context.Client.Guilds.FirstOrDefault();
 
             switch (command.ToLower())
             {
-                case "delete":
-                    await DeleteAllDataAsync(guild);
-                    break;
                 case "create":
                     await PopulateAllGuildsAsync(new State {Id = 9, Name = "Delhi"}, guild);
                     break;
             }
 
             await ReplyAsync($"{Context.User.Mention}, I have done it!");
-        }
-
-        private static async Task DeleteAllDataAsync(SocketGuild guild)
-        {
-            var channelIds = guild.CategoryChannels
-                .Where(x => x.Name.ToLower() != "info" || x.Name.ToLower() != "other")
-                .Select(x => x.Channels)
-                .Select(x => x.Select(x => x.Id));
-            
-            Console.WriteLine(channelIds);
         }
 
         private async Task PopulateAllGuildsAsync(State state, SocketGuild guild)
@@ -131,26 +116,6 @@ namespace CoWinDiscord.Modules
                             sendTTSMessages: PermValue.Deny))
                 };
             });
-        }
-
-        private async Task<bool> SentOnMasterGuild()
-        {
-            var masterGuild = Context.Client.Guilds.FirstOrDefault(x => x.Id == 789070012307865632);
-            if (masterGuild != null && Context.Guild.Id == masterGuild.Id)
-            {
-                return true;
-            }
-
-            await Context.User.SendMessageAsync($"Please run this command in {masterGuild.Name}");
-            return false;
-        }
-
-        private async Task<IGuild> CreateGuildAsync(string name)
-        {
-            var regions = await Context.Guild.GetVoiceRegionsAsync();
-            var region = regions.FirstOrDefault();
-
-            return await Context.Client.CreateGuildAsync(name, region);
         }
 
         private bool ChannelExists(SocketGuild guild, string name)
