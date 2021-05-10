@@ -6,3 +6,6 @@ CoWinDiscord is a more generalized try to help people get the vaccine (originall
 
 - [CoWinChecker](/src/CowinChecker/)
 - [CoWinDiscord](/src/CoWinDiscord/)
+
+### Caution for developers:
+This code *is* messy, I am sorry. Just wanted to get something running which can help out people. This isn't a long term project, as vaccne production is increasing.
