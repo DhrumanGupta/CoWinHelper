@@ -2,26 +2,17 @@
   "Interval": 6000,
   "PersonData": [
     {
-      "Name": "VaccineSAS",
-      "Districts": [],
-      "PinCodes": [
-        160062
-      ],
-      "MinimumSeats": 3,
-      "VaccineType": "COVAXIN"
-    },
-    {
       "Name": "VaccineAlerts",
       "Districts": [
         145
       ],
-      "PinCodes": [],
+      "PinCodes": [
+        201304
+      ],
       "MinimumSeats": 1,
       "CenterKeywords": [
         "DALLUPURA",
-        "ASHOK NAGAR",
-        "KONDLI",
-        "MAX HOSPITAL"
+        "ASHOK NAGAR"
       ],
       "VaccineType": ""
     }
