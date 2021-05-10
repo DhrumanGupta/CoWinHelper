@@ -85,9 +85,9 @@ namespace CoWinDiscord.Modules
                 });
             }
             
-            if (!ChannelExists(guild, "bot commands"))
+            if (!ChannelExists(guild, "commands"))
             {
-                await guild.CreateTextChannelAsync("bot commands", x =>
+                await guild.CreateTextChannelAsync("commands", x =>
                 {
                     x.CategoryId = supportCat.Id;
                 });

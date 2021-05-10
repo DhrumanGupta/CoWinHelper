@@ -29,7 +29,7 @@ namespace CoWinDiscord.Modules
                 var server = _client.Guilds.FirstOrDefault(x => x.Id != 789070012307865632);
                 await ProcessData(9, server);
 
-                await Task.Delay(15000);
+                await Task.Delay(14000);
             }
         }
 
@@ -61,6 +61,10 @@ namespace CoWinDiscord.Modules
 #endif
                 return;
             }
+            
+#if DEBUG
+            Console.Write($"{centers.Length} ");
+#endif
 
             var possibleCenters = new List<Center>();
             foreach (var center in centers)
@@ -111,7 +115,6 @@ namespace CoWinDiscord.Modules
                     .AddField("Address", $"{center.name},\n{center.district_name}")
                     .AddField("Date", session.date)
                     .AddField("Available Capacity", session.available_capacity, true)
-                    // .WithFooter("To donate, run !donate in #bot-commands")
                     .WithTimestamp(DateTimeOffset.Now)
                     .Build();
             }
