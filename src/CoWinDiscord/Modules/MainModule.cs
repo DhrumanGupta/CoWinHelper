@@ -26,7 +26,7 @@ namespace CoWinDiscord.Modules
             Console.WriteLine("\nStarted Main Loop\n");
             while (true)
             {
-                var server = _client.Guilds.FirstOrDefault(x => x.Id != 789070012307865632);
+                var server = _client.Guilds.FirstOrDefault();
                 await ProcessData(9, server);
 
                 await Task.Delay(14000);
