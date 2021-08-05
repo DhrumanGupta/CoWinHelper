@@ -47,7 +47,7 @@ namespace CowinChecker
                         foreach (var district in person.Districts)
                         {
                             var uri =
-                                @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={district}&date={DateTime.Today:dd/MM/yyyy}";
+                                @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id={district}&date={DateTime.Today:dd/MM/yyyy}";
                             // var result = manager.Get(uri);
                             var result = await manager.GetAsync(uri);
                             await ProcessData(result, filePath, messageService, person, DataType.District);
@@ -61,7 +61,7 @@ namespace CowinChecker
                         foreach (var pincode in person.PinCodes)
                         {
                             var uri =
-                                @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByPin?pincode={pincode}&date={DateTime.Today:dd/MM/yyyy}";
+                                @$"https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode={pincode}&date={DateTime.Today:dd/MM/yyyy}";
                             // var result = manager.Get(uri);
                             var result = await manager.GetAsync(uri);
                             await ProcessData(result, filePath, messageService, person, DataType.Pincode);
