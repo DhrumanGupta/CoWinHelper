@@ -9,6 +9,8 @@ namespace CowinChecker
     {
         public bool IsReady { get; set; }
         private ChromeDriver _driver;
+        
+        private const string _inputXpath = "/html/body/div/div[1]/div[1]/div[4]/div[1]/footer/div[1]/div[2]/div/div[1]/div/div[2]";
 
         public WhatsappMessageService()
         {
@@ -29,7 +31,7 @@ namespace CowinChecker
             chromeDriverService.SuppressInitialDiagnosticInformation = true;
 
             _driver = new ChromeDriver(options) {Url = "https://web.whatsapp.com/"};
-            _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+            _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(4);
 
             try
             {
@@ -57,14 +59,13 @@ namespace CowinChecker
 
                 var groupTitle = _driver.FindElement(By.XPath($"//span[contains(@title,'{to}')]"));
                 groupTitle.Click();
-
-                var inputXpath = "//*[@id=\"main\"]/footer/div[1]/div[2]/div/div[2]";
-                var inputBox = _driver.FindElement(By.XPath(inputXpath));
+                var inputBox = _driver.FindElement(By.XPath(_inputXpath));
                 inputBox.SendKeys(message);
                 inputBox.SendKeys(Keys.Enter);
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 // ignored
             }
         }
@@ -81,8 +82,7 @@ namespace CowinChecker
                 var groupTitle = _driver.FindElement(By.XPath($"//span[contains(@title,'{to}')]"));
                 groupTitle.Click();
 
-                var inputXpath = "//*[@id=\"main\"]/footer/div[1]/div[2]/div/div[2]";
-                var inputBox = _driver.FindElement(By.XPath(inputXpath));
+                var inputBox = _driver.FindElement(By.XPath(_inputXpath));
 
                 foreach (var message in messages)
                 {

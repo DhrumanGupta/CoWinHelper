@@ -1,18 +1,15 @@
 {
-  "Interval": 6000,
+  "Interval": 10000,
   "PersonData": [
     {
-      "Name": "VaccineAlerts",
+      "Name": "Cool Name here",
       "Districts": [
-        145
+        650
       ],
       "PinCodes": [
-        201304
       ],
-      "MinimumSeats": 1,
+      "MinimumSeats": 100,
       "CenterKeywords": [
-        "DALLUPURA",
-        "ASHOK NAGAR"
       ],
       "VaccineType": ""
     }
